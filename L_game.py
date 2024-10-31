@@ -24,26 +24,43 @@ last n moves; to switch to computer-vs-computer play; to rotate or flip the
 board (to aid visualization for the human); to save the game; etc. The plot of 
 the board could be as simple as ASCII text symbols, or as fancy as you like.
 '''
-#Grid size and diretions
-GRID_SIZE = 4
-NORTH, SOUTH, EAST, WEST = 0, 1, 2, 3
+import sys
+from somepackage import util
 
+#Grid size
+GRID_SIZE = 4
+
+class Grid:
+    def __init__(self , width, height, initValue = False, bitRep = None):
+        util.raiseNotDefined()
+
+class Agent:
+    def __init__(self, index = 0):
+        self.index = index
+    
+    def getAction(self, state):
+        util.raiseNotDefined()
+
+class Directions: 
+    NORTH = 'North'
+    SOUTH = 'South'
+    EAST = 'East'
+    WEST = 'West'
+    STOP = 'Stop'
+
+    LEFT = {NORTH: WEST, SOUTH:EAST, EAST: NORTH, WEST: SOUTH, STOP: STOP}
+
+    RIGHT = {v: k for k, v in LEFT.items()}
+
+    REVERSE = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST, STOP: STOP}
 
 #L piece orientation
-
-
-
-
 class GameState:
-
-
     def init(self, player_1, player_2, neutral_piece):
         #initalize tje game state with  the startiong postions for the L pieces and neutral 
         #player 1 and player 2 represent the corner position and orientation of each L-PIece
         #neutral piece is the 2 1x1 ciricle piece
     
-
-
     def is_valid():
         #check if a given (x,y) position is within the grid boundries
         #return true if within bound, if not return false
@@ -55,24 +72,23 @@ class GameState:
     def is_position_free():
         #check if positon is free within the bound, and not occupied by other player
         #no overlapping with neurtal piece
-    
 
     def apply_move():
         #update the L piece postion
-    
 
+    def getDirection(self):
+        # returns agent's current direction 
+        return self.direction
 
     def get_legal_move():
         #get all possible legal moves for the given player's L-Piece
         #get current L-Piece position and oreientation
-    
 
     def eval():
         #get legal moves for both players
         #calculate the difference in the number of moves between the max and min players
         #return the difference as the heuristic score
     
-
     def miniMax(gamestate, depth, alpha, beta, max__min_player):
         #recurisve minimax function with alpha-beta pruning
         #gamestate: the current state of the game
@@ -81,10 +97,8 @@ class GameState:
         #max__min_player: boolean telling wheterh we are max or min
         #return best score
 
-
     def keyboard_input():
         #choose inputting format on keyboard for user input
     
-
     def main():
         #for displaying main menu like how we did in wordle or similar projects
