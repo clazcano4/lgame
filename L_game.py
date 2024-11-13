@@ -25,38 +25,12 @@ board (to aid visualization for the human); to save the game; etc. The plot of
 the board could be as simple as ASCII text symbols, or as fancy as you like.
 '''
 import sys
+from functions import *
 from somepackage import util
-
-#Grid size
-GRID_SIZE = 4
-
-class Grid:
-    def __init__(self , width, height, initValue = False, bitRep = None):
-        util.raiseNotDefined()
-
-class Agent:
-    def __init__(self, index = 0):
-        self.index = index
-    
-    def getAction(self, state):
-        util.raiseNotDefined()
-
-class Directions: 
-    NORTH = 'North'
-    SOUTH = 'South'
-    EAST = 'East'
-    WEST = 'West'
-    STOP = 'Stop'
-
-    LEFT = {NORTH: WEST, SOUTH:EAST, EAST: NORTH, WEST: SOUTH, STOP: STOP}
-
-    RIGHT = {v: k for k, v in LEFT.items()}
-
-    REVERSE = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST, STOP: STOP}
 
 #L piece orientation
 class GameState:
-    def init(self, player_1, player_2, neutral_piece):
+    def init(self, playerOne, PlayerTwo, neutralPieceOne, neutralPieceTwo):
         #initalize tje game state with  the startiong postions for the L pieces and neutral 
         #player 1 and player 2 represent the corner position and orientation of each L-PIece
         #neutral piece is the 2 1x1 ciricle piece
