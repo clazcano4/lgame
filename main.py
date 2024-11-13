@@ -25,6 +25,9 @@ cell_size = 100
 # Colors
 white = (255, 255, 255)
 black = (0, 0, 0)
+red = (255, 0, 0)
+blue = (0, 0, 255)
+gray = (128, 128, 128)
 
 # Game loop
 running = True
