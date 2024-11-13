@@ -4,12 +4,12 @@ import sys
 
 
 #player's position
-player_positions = {
+player_positions = [
     (2,1 ), (3,1 ), (3,2 ), (3,3 ),  #player 1
     (2,2 ), (2,3 ), (2,4 ), (3, 4)   #player 2
-}
+]
 
-
+dot_positions = [(1, 1), (4, 4)]  # Initial positions for the dots
 # Initialize Pygame
 pygame.init()
 
