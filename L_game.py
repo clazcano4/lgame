@@ -25,45 +25,65 @@ board (to aid visualization for the human); to save the game; etc. The plot of
 the board could be as simple as ASCII text symbols, or as fancy as you like.
 '''
 import sys
+import main
 from functions import *
 from somepackage import util
 
 #L piece orientation
 class GameState:
-    def init(self, playerOne, PlayerTwo, neutralPieceOne, neutralPieceTwo):
-        #initalize tje game state with  the startiong postions for the L pieces and neutral 
-        #player 1 and player 2 represent the corner position and orientation of each L-PIece
-        #neutral piece is the 2 1x1 ciricle piece
+    def __init__(self, playerOne, playerTwo, neutralPieceOne, neutralPieceTwo):
+        self.grid_size = 4  
+        self.player_one = playerOne  #Position and orientation for Player 1's L-piece
+        self.player_two = playerTwo  #Position and orientation for Player 2's L-piece
+        self.neutral_piece_one = neutralPieceOne  #Position of first neutral piece
+        self.neutral_piece_two = neutralPieceTwo  #Position of second neutral piece
+        
+
+    def is_valid(self, x, y):
+        #Check if within grid boundaries
+        if x < 1 or x > self.grid_size or y < 1 or y > self.grid_size:
+            return False
+
+        #Check if position is occupied by Player 1's L-piece
+        if (x, y) in self.get_Piece_Position(self.player_one):
+            return False
+
+        #Check if position is occupied by Player 2's L-piece
+        if (x, y) in self.get_Piece_Position(self.player_two):
+            return False
+
+        #Check if position is occupied by any neutral piece
+        if (x, y) == self.neutral_piece_one or (x, y) == self.neutral_piece_two:
+            return False
+
+        #If all checks pass, the position is valid
+        return True
     
-    def is_valid():
-        #check if a given (x,y) position is within the grid boundries
-        #return true if within bound, if not return false
-    
-    def get_Piece_Position():
+    #def get_Piece_Position():
         #caclucate the (x,y) positions based on corner and oritentation
         #return a list of all (x,y) postions that the L piece occupies
     
-    def is_position_free():
+    #def is_position_free():
         #check if positon is free within the bound, and not occupied by other player
         #no overlapping with neurtal piece
 
-    def apply_move():
+    #def apply_move():
         #update the L piece postion
 
-    def getDirection(self):
+    #def getDirection(self):
         # returns agent's current direction 
-        return self.direction
+        #return self.direction
 
-    def get_legal_move():
+    #def get_legal_move():
         #get all possible legal moves for the given player's L-Piece
         #get current L-Piece position and oreientation
 
-    def eval():
+    #def eval():
         #get legal moves for both players
         #calculate the difference in the number of moves between the max and min players
         #return the difference as the heuristic score
     
-    def miniMax(gamestate, depth, alpha, beta, max__min_player):
+    #def miniMax(gamestate, depth, alpha, beta, max__min_player):
         #recurisve minimax function with alpha-beta pruning
         #gamestate: the current state of the game
         #depth: max search depth for minimax algo
@@ -71,8 +91,8 @@ class GameState:
         #max__min_player: boolean telling wheterh we are max or min
         #return best score
 
-    def keyboard_input():
+    #def keyboard_input():
         #choose inputting format on keyboard for user input
     
-    def main():
+    #def main():
         #for displaying main menu like how we did in wordle or similar projects
