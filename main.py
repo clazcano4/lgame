@@ -1,4 +1,14 @@
 import pygame
+import sys
+
+
+
+#player's position
+player_positions = {
+    (2,1 ), (3,1 ), (3,2 ), (3,3 ),  #player 1
+    (2,2 ), (2,3 ), (2,4 ), (3, 4)   #player 2
+}
+
 
 # Initialize Pygame
 pygame.init()
