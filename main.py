@@ -1,10 +1,10 @@
 import pygame
 import sys
 
-#player's position
+# Player's position
 player_positions = [
-    (2, 1), (3, 1), (3, 2), (3, 3),  #player 1
-    (2, 2), (2, 3), (2, 4), (3, 4)   #player 2
+    (2, 1), (3, 1), (3, 2), (3, 3),  # player 1
+    (2, 2), (2, 3), (2, 4), (3, 4)   # player 2
 ]
 
 dot_positions = [(1, 1), (4, 4)]  # Initial positions for the dots
@@ -28,34 +28,37 @@ red = (255, 0, 0)
 blue = (0, 0, 255)
 gray = (128, 128, 128)
 
-def neutralOne():
-    pygame.draw.circle(screen, white, (50, 50), 40)
-    pygame.display.update()
+class NeutralPieces:
+    def neutralOne(self):
+        pygame.draw.circle(screen, white, (50, 50), 40)
+        pygame.display.update()
 
-def neutralTwo():
-    pygame.draw.circle(screen, white, (350, 350), 40)
-    pygame.display.update()
+    def neutralTwo(self):
+        pygame.draw.circle(screen, white, (350, 350), 40)
+        pygame.display.update()
 
-class players():
-    def oneX():
-        pygame.draw.rect(screen, red, (100, 0, 200, 100))
-    def oneY():
-        pygame.draw.rect(screen, red, (100, 100, 100, 200))
-    
-    pygame.display.update()
+class PlayersOne:
+    def oneX(self):
+        pygame.draw.rect(screen, red, (100, 0, 200, 100))  # Adjust to the player 1's piece position
+        pygame.display.update()
 
+    def oneY(self):
+        pygame.draw.rect(screen, red, (100, 100, 100, 200))  # Adjust to the player 1's piece position
+        pygame.display.update()
 
-def playerOneY():
-    pygame.draw.rect(screen, red, (100, 100, 100, 200))
-    pygame.display.update()
+class PlayersTwo:
+    def twoX(self):
+        pygame.draw.rect(screen, blue, (100, 300, 200, 100))  # Adjust to the player 2's piece position
+        pygame.display.update()
 
-def playerTwoX():
-    pygame.draw.rect(screen, blue, (100, 300, 200, 100))
-    pygame.display.update()
+    def twoY(self):
+        pygame.draw.rect(screen, blue, (200, 100, 100, 200))  # Adjust to the player 2's piece position
+        pygame.display.update()
 
-def playerTwoY():
-    pygame.draw.rect(screen, blue, (200, 100, 100, 200))
-    pygame.display.update()
+# Create instances of the player classes
+neutral = NeutralPieces()
+playerOne = PlayersOne()
+playerTwo = PlayersTwo()
 
 # Game loop
 running = True
@@ -70,14 +73,16 @@ while running:
             x = col * cell_size
             y = row * cell_size
             pygame.draw.rect(screen, white, (x, y, cell_size, cell_size), 2)
-            neutralOne()
-            neutralTwo()
-            playerOneX()
-            playerOneY()
-            playerTwoX()
-            playerTwoY()
+
+    # display player and neutral pieces (based on their positions)
+    neutral.neutralOne()  
+    neutral.neutralTwo()
+    playerOne.oneX()  
+    playerOne.oneY()  
+    playerTwo.twoX()  
+    playerTwo.twoY()  
 
     # Update display
     pygame.display.flip()
+
 pygame.quit()
- 
