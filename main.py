@@ -44,6 +44,16 @@ def playerOneY():
     pygame.draw.rect(screen, red, (100, 100, 100, 200))
     pygame.display.update()
 
+def playerTwoX():
+    pygame.draw.rect(screen, blue, (100, 300, 200, 100))
+    pygame.display.update()
+
+def playerTwoY():
+    pygame.draw.rect(screen, blue, (200, 100, 100, 200))
+    pygame.display.update()
+
+
+
 # Game loop
 running = True
 while running:
@@ -61,7 +71,8 @@ while running:
             neutralTwo()
             playerOneX()
             playerOneY()
-
+            playerTwoX()
+            playerTwoY()
 
     # Update display
     pygame.display.flip()
