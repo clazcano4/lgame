@@ -36,6 +36,14 @@ def neutralTwo():
     pygame.draw.circle(screen, white, (350, 350), 40)
     pygame.display.update()
 
+def playerOneX():
+    pygame.draw.rect(screen, red, (100, 0, 200, 100))
+    pygame.display.update()
+
+def playerOneY():
+    pygame.draw.rect(screen, red, (100, 100, 100, 200))
+    pygame.display.update()
+
 # Game loop
 running = True
 while running:
@@ -51,6 +59,9 @@ while running:
             pygame.draw.rect(screen, white, (x, y, cell_size, cell_size), 2)
             neutralOne()
             neutralTwo()
+            playerOneX()
+            playerOneY()
+
 
     # Update display
     pygame.display.flip()
