@@ -1,15 +1,14 @@
 import pygame
 import sys
 
-
-
 #player's position
 player_positions = [
-    (2,1 ), (3,1 ), (3,2 ), (3,3 ),  #player 1
-    (2,2 ), (2,3 ), (2,4 ), (3, 4)   #player 2
+    (2, 1), (3, 1), (3, 2), (3, 3),  #player 1
+    (2, 2), (2, 3), (2, 4), (3, 4)   #player 2
 ]
 
 dot_positions = [(1, 1), (4, 4)]  # Initial positions for the dots
+
 # Initialize Pygame
 pygame.init()
 
@@ -29,6 +28,14 @@ red = (255, 0, 0)
 blue = (0, 0, 255)
 gray = (128, 128, 128)
 
+def neutralOne():
+    pygame.draw.circle(screen, white, (50, 50), 40)
+    pygame.display.update()
+
+def neutralTwo():
+    pygame.draw.circle(screen, white, (350, 350), 40)
+    pygame.display.update()
+
 # Game loop
 running = True
 while running:
@@ -42,6 +49,8 @@ while running:
             x = col * cell_size
             y = row * cell_size
             pygame.draw.rect(screen, white, (x, y, cell_size, cell_size), 2)
+            neutralOne()
+            neutralTwo()
 
     # Update display
     pygame.display.flip()
