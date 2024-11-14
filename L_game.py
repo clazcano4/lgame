@@ -29,6 +29,20 @@ import main
 from functions import *
 from somepackage import util
 
+class Player:   # class where each player's moves and evaluation functions will be stored
+
+    def getMove(self, gameState):
+        legalMoves = gameState.getLegalMoves() # returns legal moves of gameState
+    
+    def getPastMoves(self, currentGameState):
+        return self.stack # returns list of past moves made by player
+
+    def evaluationFunction(self, currentGameState, move):
+        util.raiseNotDefined()
+
+    def scoreEvaluationFunction(currentGameState):
+        util.raiseNotDefined()
+
 #L piece orientation
 class GameState:
     def __init__(self, playerOne, playerTwo, neutralPieceOne, neutralPieceTwo):
@@ -37,19 +51,18 @@ class GameState:
         self.player_two = playerTwo  #Position and orientation for Player 2's L-piece
         self.neutral_piece_one = neutralPieceOne  #Position of first neutral piece
         self.neutral_piece_two = neutralPieceTwo  #Position of second neutral piece
-        
 
-    def is_valid(self, x, y):
+    def is_valid(self, x, y, direction):
         #Check if within grid boundaries
         if x < 1 or x > self.grid_size or y < 1 or y > self.grid_size:
             return False
 
         #Check if position is occupied by Player 1's L-piece
-        if (x, y) in self.get_Piece_Position(self.player_one):
+        if (x, y, direction) in self.get_Piece_Position(self.player_one):
             return False
 
         #Check if position is occupied by Player 2's L-piece
-        if (x, y) in self.get_Piece_Position(self.player_two):
+        if (x, y, direction) in self.get_Piece_Position(self.player_two):
             return False
 
         #Check if position is occupied by any neutral piece
@@ -74,7 +87,7 @@ class GameState:
         # returns agent's current direction 
         #return self.direction
 
-    #def get_legal_move():
+    #def getLegalMoves():
         #get all possible legal moves for the given player's L-Piece
         #get current L-Piece position and oreientation
 

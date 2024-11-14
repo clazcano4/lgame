@@ -51,5 +51,31 @@ class Directions:
             from keyboard import keys_waiting
             CoordsAndDirections.running = True
 
+
+class pastMoves: # class stores stack with all moves made by Agent
+    def __init__(self):
+        self.stack = []
+
+    def push(self, x, y, direction, *neutralCoords):    # pushes user's moves to stack
+        if (neutralCoords):
+            self.stack.append((x, y, direction, *neutralCoords))
+        else:
+            self.stack.append((x, y, direction))
+
+    def pop(self): # Pops user's moves from stack
+        if(len(self.stack) != 0):
+            return self.stack.pop()
+    
+    def size(self):
+        return len(self.stack)
+    
+    def goBack(self, amountOfMoves): # allows user to go back to old Moves
+        while (amountOfMoves != 0 and self.stack.size() != 0):
+            self.stack.pop()
+            amountOfMoves = amountOfMoves - 1 
+        oldMove = self.stack.pop() # pops old move from stack
+        self.stack.push(oldMove) # old move now becomes new move than can be re-acessed in future from stack
+        return oldMove  # returns old move's coordinates
+
         
 

@@ -1,16 +1,7 @@
 from functions import *
 
-class pastMoves: # class stores stack with all moves made by Agent
-    def __init__(self):
-        self.stack = []
-    def push(self, x, y, direction, *neutralCoords):
-        if (neutralCoords):
-            self.stack.append((x, y, direction, *neutralCoords))
-        else:
-            self.stack.append((x, y, direction))
-
-
 def userInput(): # Prompts user to input coordinates for their next move 
+    from functions import pastMoves
     running = True
     playerOneMoves = pastMoves()
     playerTwoMoves = pastMoves()
@@ -18,11 +9,11 @@ def userInput(): # Prompts user to input coordinates for their next move
     currentPlayer = 1
 
     while (running):
-        coordsAndDirection = input("Enter your move (e.g, '1 2 E 4 3 1 1'): ")
-        move = coordsAndDirection.split()
+        coordsAndDirection = input("Enter your move (e.g, '1 2 E 4 3 1 1'): ") # Prompts user to enter coords of next move
+        move = coordsAndDirection.split()   # splits input to isolate variables as a string
 
-        if (len(move) < 3 or len(move) > 7):
-            print("Invalid input. Please enter a valid move")
+        if (len(move) < 3 or len(move) > 7):    # Checks if inputted move is in the corrected format (e.g., '1 2 E 4 3 1 1' or '1 2 E')
+            print("Invalid input. Please enter a valid move")  
             continue
 
         try:
