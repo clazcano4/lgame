@@ -72,13 +72,34 @@ class GameState:
         #If all checks pass, the position is valid
         return True
     
-    #def get_Piece_Position():
-        #caclucate the (x,y) positions based on corner and oritentation
-        #return a list of all (x,y) postions that the L piece occupies
+
+    def free_postion(self, x, y):
+        occupied_postion = ()
+
     
-    #def is_position_free():
-        #check if positon is free within the bound, and not occupied by other player
-        #no overlapping with neurtal piece
+    def get_Piece_Position(self, player):
+        corner, orientation = player
+        x, y = corner
+
+        postions = [(x,y)]
+        if orientation == "North":
+            postions += [(x, y - 1), (x, y - 2), (x + 1, y - 2), (x + 2, y - 2)]
+        elif orientation == "South":
+            util.raiseNotDefined()
+        elif orientation == "East":
+            util.raiseNotDefined()
+        elif orientation == "West":
+            util.raiseNotDefined()
+
+        return util.raiseNotDefined()
+
+        
+
+    def getLegalMoves(self, player):
+        legal_moves = []
+
+
+            
 
     #def apply_move():
         #update the L piece postion
@@ -87,9 +108,7 @@ class GameState:
         # returns agent's current direction 
         #return self.direction
 
-    #def getLegalMoves():
-        #get all possible legal moves for the given player's L-Piece
-        #get current L-Piece position and oreientation
+   
 
     #def eval():
         #get legal moves for both players
