@@ -51,6 +51,14 @@ class GameState:
         self.player_two = playerTwo  #Position and orientation for Player 2's L-piece
         self.neutral_piece_one = neutralPieceOne  #Position of first neutral piece
         self.neutral_piece_two = neutralPieceTwo  #Position of second neutral piece
+    
+    # def generateSuccessor(self)
+
+    # def getValue(self)
+
+    # def getNumAgents(self)
+
+    # def evaluationFunction(self)
 
     def is_valid(self, x, y, direction):
         #Check if within grid boundaries
@@ -107,8 +115,6 @@ class GameState:
     #def getDirection(self):
         # returns agent's current direction 
         #return self.direction
-
-   
 
     #def eval():
         #get legal moves for both players
