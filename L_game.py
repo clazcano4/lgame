@@ -60,77 +60,7 @@ class GameState:
 
     # def evaluationFunction(self)
 
-    def is_valid(self, x, y, direction):
-        #Check if within grid boundaries
-        if x < 1 or x > self.grid_size or y < 1 or y > self.grid_size:
-            return False
-
-        #Check if position is occupied by Player 1's L-piece
-        if (x, y, direction) in self.get_Piece_Position(self.player_one):
-            return False
-
-        #Check if position is occupied by Player 2's L-piece
-        if (x, y, direction) in self.get_Piece_Position(self.player_two):
-            return False
-
-        #Check if position is occupied by any neutral piece
-        if (x, y) == self.neutral_piece_one or (x, y) == self.neutral_piece_two:
-            return False
-
-        #If all checks pass, the position is valid
-        return True
     
-
-    def free_postion(self, x, y):
-        occupied_postion = ()
-
-    
-    def get_Piece_Position(self, player):
-        corner, orientation = player
-        x, y = corner
-
-        postions = [(x,y)]
-        if orientation == "North":
-            postions += [(x, y - 1), (x, y - 2), (x + 1, y - 2), (x + 2, y - 2)]
-        elif orientation == "South":
-            util.raiseNotDefined()
-        elif orientation == "East":
-            util.raiseNotDefined()
-        elif orientation == "West":
-            util.raiseNotDefined()
-
-        return util.raiseNotDefined()
-
-        
-
-    def getLegalMoves(self, player):
-        legal_moves = []
 
 
             
-
-    #def apply_move():
-        #update the L piece postion
-
-    #def getDirection(self):
-        # returns agent's current direction 
-        #return self.direction
-
-    #def eval():
-        #get legal moves for both players
-        #calculate the difference in the number of moves between the max and min players
-        #return the difference as the heuristic score
-    
-    #def miniMax(gamestate, depth, alpha, beta, max__min_player):
-        #recurisve minimax function with alpha-beta pruning
-        #gamestate: the current state of the game
-        #depth: max search depth for minimax algo
-        #alpha, beta: values for alpha-beta pruning
-        #max__min_player: boolean telling wheterh we are max or min
-        #return best score
-
-    #def keyboard_input():
-        #choose inputting format on keyboard for user input
-    
-    #def main():
-        #for displaying main menu like how we did in wordle or similar projects
