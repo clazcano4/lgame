@@ -1,6 +1,7 @@
 import pygame
 from util import Stack
 from keyboard import userInput
+from functions import *
 
 # Initialize Pygame
 pygame.init()
