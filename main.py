@@ -1,7 +1,6 @@
 import pygame
 from util import Stack
 from keyboard import userInput
-from functions import *
 
 # Initialize Pygame
 pygame.init()
@@ -33,8 +32,39 @@ dot_positions = [(1, 1), (4, 4)]  # Neutral pieces
 # Input state
 input_text = ""
 
+class pastMoves: # class stores stack with all moves made by Agent
+    def __init__(self):
+        self.stack = []
+
+    def push(self, state):    # pushes user's moves to stack
+        self.stack.append(state)
+
+    def pop(self): # Pops user's moves from stack
+        if(len(self.stack) != 0):
+            return self.stack.pop()
+    
+    def size(self):
+        return len(self.stack)
+    
+    def goBack(self, amountOfMoves): # allows user to go back to old Moves
+        if amountOfMoves <= 0:
+            print("Invalid number of moves to go back!")
+            return
+        for _ in range(amountOfMoves):
+            if self.size() > 0:
+                self.stack.pop()
+            else:
+                print("No more moves to undo!")
+                break
+        if self.size() > 0:
+            oldMove = self.stack[-1]
+            return oldMove
+        else:
+            print("No more moves available to go back to!")
+            return None
+
 # Stack to track moves for undo
-past_moves = Stack()
+past_moves = pastMoves()
 
 # Current player
 current_player = "player1"
@@ -129,18 +159,26 @@ def update_game_state(player, move):
     return False
 
 
-def undo_last_move():
-    #Undo the last move
+def undo_last_move(amount = 1):
+    #Undo the last amount of moves
     global player_positions, dot_positions, current_player, past_moves
 
-    if not past_moves.isEmpty():
+    if amount <= 0:
+        print("Invalid undo amount!")
+        return
+    
+    if past_moves.size() == 0:
+        print("No moves to undo!")
+        return 
+
+    if amount > 1:
+        past_moves.goBack(amount - 1)
+    else:
         saved_state = past_moves.pop()
         player_positions = saved_state["player_positions"]
-        dot_positions = saved_state["dot_positions"]
+        dot_position = saved_state["dot_positions"]
         current_player = saved_state["current_player"]
-        print("Undo successful. Restored previous state.")
-    else:
-        print("No moves to undo!")
+        print("Undo successful. Restored state from %d move(s)." % amount)
 
 
 def draw_grid():
@@ -209,8 +247,13 @@ while running:
             running = False
 
         if handle_input(event):  # Process input
-            if input_text.strip().lower() == "undo":
-                undo_last_move()
+            command_parts = input_text.strip().lower().split()
+            if command_parts[0] == "undo":
+                if len(command_parts) == 2 and command_parts[1].isdigit():
+                    amount = int(command_parts[1])
+                    undo_last_move(amount)
+                else:
+                    undo_last_move(1)
                 input_text = ""
                 continue
 
