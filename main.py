@@ -50,15 +50,21 @@ class pastMoves: # class stores stack with all moves made by Agent
         if amountOfMoves <= 0:
             print("Invalid number of moves to go back!")
             return
+        if self.size() == 0:
+            print("No more moves to undo!")
+            return None 
+        
+        last_valid_state = None 
+
         for _ in range(amountOfMoves):
             if self.size() > 0:
-                self.stack.pop()
+                last_valid_state = self.pop()
             else:
                 print("No more moves to undo!")
                 break
-        if self.size() > 0:
-            oldMove = self.stack[-1]
-            return oldMove
+
+        if last_valid_state:
+            return last_valid_state
         else:
             print("No more moves available to go back to!")
             return None
@@ -171,12 +177,11 @@ def undo_last_move(amount = 1):
         print("No moves to undo!")
         return 
 
-    if amount > 1:
-        past_moves.goBack(amount - 1)
-    else:
-        saved_state = past_moves.pop()
+    saved_state = past_moves.goBack(amount)
+
+    if saved_state:
         player_positions = saved_state["player_positions"]
-        dot_position = saved_state["dot_positions"]
+        dot_positions = saved_state["dot_positions"]
         current_player = saved_state["current_player"]
         print("Undo successful. Restored state from %d move(s)." % amount)
 
