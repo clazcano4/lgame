@@ -242,8 +242,58 @@ def handle_input(event):
             input_text += event.unicode.upper() if event.unicode.isalpha() else event.unicode
     return False
 
+def initialize_game_state():
+    global player_positions, dot_positions
 
-# Main game loop
+    # Default initial state
+    default_state = "3 1 W 1 1 4 4 2 4 E"
+
+    # Prompt the user for the initial state
+    user_input = raw_input("Enter initial game state (or press Enter for default): ").strip()  
+    if not user_input:
+        user_input = default_state
+
+    try:
+        # Parse the input
+        tokens = user_input.split()
+        if len(tokens) != 10:
+            raise ValueError("Invalid input format. Must provide exactly 10 values.")
+
+        # Parse Player 1's L-piece
+        p1_row, p1_col = int(tokens[0]), int(tokens[1])
+        p1_orientation = tokens[2].upper()
+        player1_positions = generate_l_shape(p1_row, p1_col, p1_orientation)
+
+        # Parse neutral pieces
+        neutral_1 = (int(tokens[3]), int(tokens[4]))
+        neutral_2 = (int(tokens[5]), int(tokens[6]))
+
+        # Parse Player 2's L-piece
+        p2_row, p2_col = int(tokens[7]), int(tokens[8])
+        p2_orientation = tokens[9].upper()
+        player2_positions = generate_l_shape(p2_row, p2_col, p2_orientation)
+
+        # Validate positions
+        all_positions = set(player1_positions + player2_positions + [neutral_1, neutral_2])
+        if len(all_positions) != 10:  # Ensure no overlapping pieces
+            raise ValueError("Pieces overlap or are invalid.")
+
+        # Update the game state
+        player_positions["player1"] = player1_positions
+        player_positions["player2"] = player2_positions
+        dot_positions[:] = [neutral_1, neutral_2]  # Update list in place
+
+    except ValueError as e:
+        print("Error initializing game state: {}".format(e))
+        print("Using default initial state.")
+        initialize_game_state()  # Retry with default state
+
+
+
+initialize_game_state()
+
+
+
 running = True
 
 while running:
