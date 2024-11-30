@@ -79,9 +79,9 @@ current_player = "player1"
 def generate_l_shape(x, y, orientation):
     #Generate L-piece positions based on the corner (x, y) and orientation
     if orientation == 'N':  # Vertical arm up, horizontal arm to the left
-        return [(x, y), (x + 1, y), (x + 2, y), (x + 2, y + 1)]
+        return [(x, y), (x , y - 1), (x + 1, y), (x + 2, y)]
     elif orientation == 'S':  # Vertical arm down, horizontal arm to the right
-        return [(x, y), (x - 1, y), (x - 2, y), (x - 2, y - 1)]
+        return [(x, y), (x , y + 1), (x - 1, y), (x - 2, y)]
     elif orientation == 'E':  # Horizontal arm right
         if y == 1:  # Flip the piece if it's near the left edge
             return [(x, y), (x + 1, y), (x, y + 1), (x, y + 2)]
