@@ -77,21 +77,46 @@ current_player = "player1"
 
 
 def generate_l_shape(x, y, orientation):
-    #Generate L-piece positions based on the corner (x, y) and orientation
-    if orientation == 'N':  # Vertical arm up, horizontal arm to the left
-        return [(x, y), (x , y - 1), (x + 1, y), (x + 2, y)]
-    elif orientation == 'S':  # Vertical arm down, horizontal arm to the right
-        return [(x, y), (x , y + 1), (x - 1, y), (x - 2, y)]
+    positions = []
+    if orientation == 'N':  # Vertical arm up
+        if x >= 3:  # Flip the piece if it's near the bottom edge
+            print("Flipping L-piece facing North near the bottom edge at ({}, {})".format(x, y))
+            positions = [(x, y), (x, y - 1), (x - 1, y), (x - 2, y)]  # Flip upward
+        else:  # Standard L facing up
+            print("Standard L-piece facing North at ({}, {})".format(x, y))
+            positions = [(x, y), (x, y - 1), (x + 1, y), (x + 2, y)]
+
+    elif orientation == 'S':  # Vertical arm down
+        if x <= 2:  # Flip the piece if it's near the top edge
+            print("Flipping L-piece facing South near the top edge at ({}, {})".format(x, y))
+            positions = [(x, y), (x, y + 1), (x + 1, y), (x + 2, y)]  # Flip downward
+        else:  # Standard L facing down
+            print("Standard L-piece facing South at ({}, {})".format(x, y))
+            positions = [(x, y), (x, y + 1), (x - 1, y), (x - 2, y)]
+
     elif orientation == 'E':  # Horizontal arm right
-        if y == 1:  # Flip the piece if it's near the left edge
-            return [(x, y), (x + 1, y), (x, y + 1), (x, y + 2)]
+        if y <= 2:  # Flip the piece if it's near the left edge
+            print("Flipping L-piece facing East near the left edge at ({}, {})".format(x, y))
+            positions = [(x, y), (x + 1, y), (x, y + 1), (x, y + 2)]  # Flip rightward
         else:  # Standard L facing right
-            return [(x, y), (x + 1, y), (x, y - 1), (x, y - 2)]
+            print("Standard L-piece facing East at ({}, {})".format(x, y))
+            positions = [(x, y), (x + 1, y), (x, y - 1), (x, y - 2)]
+
     elif orientation == 'W':  # Horizontal arm left
-        if y == 4:  # Flip the piece if it's near the right edge
-            return [(x, y), (x - 1, y), (x, y - 1), (x, y - 2)]
+        if y >= 3:  # Flip the piece if it's near the right edge
+            print("Flipping L-piece facing West near the right edge at ({}, {})".format(x, y))
+            positions = [(x, y), (x - 1, y), (x, y - 1), (x, y - 2)]  # Flip leftward
         else:  # Standard L facing left
-            return [(x, y), (x, y + 1), (x, y + 2), (x - 1, y)]
+            print("Standard L-piece facing West at ({}, {})".format(x, y))
+            positions = [(x, y), (x, y + 1), (x, y + 2), (x - 1, y)]
+
+    else:
+        raise ValueError("Invalid orientation: {} at position ({}, {})".format(orientation, x, y))
+
+    # Debug: Print the generated positions
+    print("Generated positions for orientation {} at ({}, {}): {}".format(orientation, x, y, positions))
+    return positions
+
    
 
 
