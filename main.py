@@ -2,6 +2,129 @@ import pygame
 from util import Stack
 from keyboard import userInput
 
+class GameState:
+    def __init__(self, player_positions, dot_positions, current_player):
+        # store current positions of players and the dots
+        self.player_positions = player_positions
+        self.dot_positions = dot_positions
+        self.current_player = current_player
+
+    def getNumAgents(self):
+        return 2
+
+    def getLegalMoves(self, agentIndex):
+        if agentIndex == 0:  # legal moves for player 1
+            return ['N', 'S', 'E', 'W']
+        elif agentIndex == 1:  # legal moves for player 2
+            return ['N', 'S', 'E', 'W']
+        return []
+
+    def generateSuccessor(self, agentIndex, move):
+        x, y, orientation, neutral_move = move
+
+        # generate positions for L-shaped pieces
+        if x is not None:
+            new_positions = generate_l_shape(x, y, orientation)
+            new_player_positions = dict(self.player_positions)
+            new_player_positions["player1" if agentIndex == 0 else "player2"] = new_positions
+        else:
+            new_player_positions = dict(self.player_positions)
+
+        # if needed, this updates the neutral pieces
+        if neutral_move:
+            from_pos, to_pos = neutral_move
+            new_dot_positions = list(self.dot_positions)
+            new_dot_positions.remove(from_pos)
+            new_dot_positions.append(to_pos)
+        else:
+            new_dot_positions = list(self.dot_positions)
+
+        return GameState(new_player_positions, new_dot_positions, "player2" if self.current_player == "player1" else "player1")
+
+    def isWin(self):
+        if self.current_player == "player1" and (2, 2) in self.player_positions["player1"]:
+            return True
+        return False
+
+    def isLose(self):
+        legal_moves = self.getLegalMoves(0) if self.current_player == "player1" else self.getLegalMoves(1)
+        return len(legal_moves) == 0
+
+    def getCurrentPlayer(self):
+        return self.current_player
+
+class MiniMax:
+    def __init__(self, depth):
+        self.depth = depth
+
+    def getMove(self, gameState):
+        value, move = self.getValue(gameState, 0, 0)
+        return move
+
+    def getValue(self, gameState, d, agentIndex):
+        if d == self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), None
+
+        numAgents = gameState.getNumAgents()
+        legalMoves = gameState.getLegalMoves(agentIndex)
+
+        bestScore = float('-inf') if agentIndex == 0 else float('inf')
+        bestMove = None
+        for move in legalMoves:
+            successor = gameState.generateSuccessor(agentIndex, (None, None, move, None))  # placeholder for neutral piece
+            value, _ = self.getValue(successor, d+1 if (agentIndex+1) % numAgents == 0 else d, (agentIndex+1) % numAgents)
+            if (agentIndex == 0 and value > bestScore) or (agentIndex == 1 and value < bestScore):
+                bestScore = value
+                bestMove = move
+        return bestScore, bestMove
+
+
+class AlphaBetaAgent:
+    def __init__(self, depth):
+        self.depth = depth
+
+    def evaluationFunction(self, gameState):
+        player1_positions = gameState.player_positions["player1"]
+        player2_positions = gameState.player_positions["player2"]
+        return len(player1_positions) - len(player2_positions)
+
+    def getMove(self, gameState):
+        numAgent = gameState.getNumAgents()
+        moveScore = []
+
+        def stopRM(list):
+            return [x for x in list if x != 'Stop']
+
+        def alphaBeta(successor, counter, alpha, beta):
+            if counter >= self.depth * numAgent or successor.isWin() or successor.isLose():
+                return self.evaluationFunction(successor)
+
+            if counter % numAgent != 0:  # Min (Player 2's turn)
+                result = float('inf')
+                for move in stopRM(successor.getLegalMoves(counter % numAgent)):
+                    dot = successor.generateSuccessor(counter % numAgent, (None, None, move, None))  # placeholder for neutral move
+                    result = min(result, alphaBeta(dot, counter + 1, alpha, beta))
+                    beta = min(beta, result)
+                    if beta < alpha:
+                        break
+                return result
+            else:  # Max (Player 1's turn)
+                result = float('-inf')
+                for move in stopRM(successor.getLegalMoves(counter % numAgent)):
+                    dot = successor.generateSuccessor(counter % numAgent, (None, None, move, None))  # placeholder for neutral move
+                    result = max(result, alphaBeta(dot, counter + 1, alpha, beta))
+                    alpha = max(alpha, result)
+                    if counter == 0:
+                        moveScore.append(result)
+                    if beta < alpha:
+                        break
+                return result
+
+        result = alphaBeta(gameState, 0, float('-inf'), float('inf'))
+        # finds move with the maximum score
+        best_move = stopRM(gameState.getLegalMoves(0))[moveScore.index(max(moveScore))]
+        return best_move
+
 # Initialize Pygame
 pygame.init()
 
