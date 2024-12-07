@@ -1,6 +1,5 @@
 import pygame
 
-
 class GameState:
     def __init__(self, player_positions, dot_positions, current_player):
         # store current positions of players and the dots
@@ -239,10 +238,6 @@ def generate_l_shape(x, y, orientation):
     print("Generated positions for orientation {} at ({}, {}): {}".format(orientation, x, y, positions))
     return positions
 
-   
-
-
-
 def is_space_empty(new_positions, other_positions, neutral_positions):
     #Check if the new positions are empty
     for pos in new_positions:
@@ -253,7 +248,6 @@ def is_space_empty(new_positions, other_positions, neutral_positions):
             print("Position {} is out of bounds.".format(pos))  # Debug message
             return False
     return True
-
 
 def update_game_state(player, move):
     #Updates the game state based on the player's move
@@ -318,7 +312,6 @@ def update_game_state(player, move):
 
     return False
 
-
 def undo_last_move(amount = 1):
     #Undo the last amount of moves
     global player_positions, dot_positions, current_player, past_moves
@@ -339,14 +332,12 @@ def undo_last_move(amount = 1):
         current_player = saved_state["current_player"]
         print("Undo successful. Restored state from %d move(s)." % amount)
 
-
 def draw_grid():
     #Draw the grid.
     for row in range(grid_size):
         for col in range(grid_size):
             x, y = col * cell_size, row * cell_size
             pygame.draw.rect(screen, gray, (x, y, cell_size, cell_size), 2)
-
 
 def draw_player_pieces(positions, color):
     #Draw player pieces based on their positions
@@ -356,14 +347,12 @@ def draw_player_pieces(positions, color):
         y = (col - 1) * cell_size
         pygame.draw.rect(screen, color, (x, y, cell_size, cell_size))
 
-
 def draw_dot(position, color):
     #Draw a dot at the specified grid position
     row, col = position
     x = (row - 1) * cell_size + cell_size // 2
     y = (col - 1) * cell_size + cell_size // 2
     pygame.draw.circle(screen, color, (x, y), cell_size // 4)
-
 
 def update_display():
     #Clear the screen and update all elements
@@ -380,7 +369,6 @@ def update_display():
     screen.blit(input_surface, (15, 430))  # Render the input text
 
     pygame.display.flip()
-
 
 def userInput(move_input):
     #Parses the move input and returns the parsed data.
@@ -409,8 +397,6 @@ def userInput(move_input):
             raise ValueError("Invalid input format.")
     except ValueError:
         raise ValueError("Invalid input. Make sure to enter integers for coordinates and a valid direction.")
-
-
 
 def handle_input(event):
     #Handle input events for typing
@@ -471,11 +457,7 @@ def initialize_game_state():
         print("Using default initial state.")
         initialize_game_state()  # Retry with default state
 
-
-
 initialize_game_state()
-
-
 
 running = True
 
