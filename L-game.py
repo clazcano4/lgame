@@ -437,7 +437,7 @@ class LGame:
             other_pieces = set(self.player_positions[other_player])
             dots = set(self.dot_positions)
             
-            # Check if any new position is invalid
+            # Check if any new L-piece position is invalid
             for pos in new_positions:
                 if not (1 <= pos[0] <= 4 and 1 <= pos[1] <= 4):
                     print("Position {} is out of bounds".format(pos))
@@ -449,30 +449,47 @@ class LGame:
                     print("Position {} overlaps with dot".format(pos))
                     return False
             
-            # Save current state for undo
+            # If neutral move is specified, validate it before making any changes
+            if neutral_move:
+                from_pos, to_pos = neutral_move
+                
+                # Check if the source position is valid
+                if from_pos not in self.dot_positions:
+                    print("Invalid neutral piece source")
+                    return False
+                
+                # Check if destination is in bounds
+                if not (1 <= to_pos[0] <= 4 and 1 <= to_pos[1] <= 4):
+                    print("Neutral piece destination is out of bounds")
+                    return False
+                
+                # Check if destination overlaps with L pieces (both current and new positions)
+                if to_pos in new_positions or to_pos in self.player_positions[other_player]:
+                    print("Invalid neutral piece destination - overlaps with L piece")
+                    return False
+                    
+                # Check if destination overlaps with other neutral piece
+                other_dot = [pos for pos in self.dot_positions if pos != from_pos][0]
+                if to_pos == other_dot:
+                    print("Invalid neutral piece destination - overlaps with other neutral piece")
+                    return False
+            
+            # At this point, both moves are valid, so save current state and apply changes
             self.past_moves.push({
                 "player_positions": dict(self.player_positions),
                 "dot_positions": list(self.dot_positions),
                 "current_player": self.current_player
             })
             
-            # Update the positions
+            # Update the L-piece position
             self.player_positions[player] = new_positions
             
-            # Handle neutral piece movement if specified
+            # Update neutral piece position if specified
             if neutral_move:
                 from_pos, to_pos = neutral_move
-                if from_pos in self.dot_positions:
-                    if to_pos not in new_positions and to_pos not in self.player_positions[other_player]:
-                        self.dot_positions.remove(from_pos)
-                        self.dot_positions.append(to_pos)
-                    else:
-                        print("Invalid neutral piece destination")
-                        return False
-                else:
-                    print("Invalid neutral piece source")
-                    return False
-                    
+                self.dot_positions.remove(from_pos)
+                self.dot_positions.append(to_pos)
+                
             return True
             
         except ValueError as e:
