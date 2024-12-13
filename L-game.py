@@ -10,30 +10,7 @@ class GameState:
     def getNumAgents(self):
         return 2
 
-    def getLegalMoves(self, agentIndex):
-        legal_moves = []
-        player = "player1" if agentIndex == 0 else "player2"
-        other_player = "player2" if player == "player1" else "player1"
-        
-        # Try all possible positions and orientations
-        for x in range(1, 5):
-            for y in range(1, 5):
-                for orientation in ['N', 'S', 'E', 'W']:
-                    try:
-                        new_positions = generate_l_shape(x, y, orientation)
-                        # Verify the move is valid
-                        valid = True
-                        for pos in new_positions:
-                            if (pos in self.player_positions[other_player] or 
-                                pos in self.dot_positions or 
-                                not (1 <= pos[0] <= 4 and 1 <= pos[1] <= 4)):
-                                valid = False
-                                break
-                        if valid:
-                            legal_moves.append((x, y, orientation))
-                    except ValueError:
-                        continue
-        return legal_moves
+    
 
     def generateSuccessor(self, agentIndex, move):
         x, y, orientation = move
@@ -47,11 +24,55 @@ class GameState:
                         "player2" if self.current_player == "player1" else "player1")
 
     def isWin(self):
-        return False  # Simplified win condition
+        opponent = "player2" if self.current_player == "player1" else "player1"
+        opponent_index = 1 if opponent == "player2" else 0
+        l_piece_moves = self.getLegalMoves(opponent_index)
+        return len(l_piece_moves) == 0
 
     def isLose(self):
-        return len(self.getLegalMoves(0 if self.current_player == "player1" else 1)) == 0
+        current_index = 0 if self.current_player == "player1" else 1
+        l_piece_moves = self.getLegalMoves(current_index)
+        return len(l_piece_moves) == 0
 
+    def getLegalMoves(self, agentIndex):
+        player = "player1" if agentIndex == 0 else "player2"
+        other_player = "player2" if player == "player1" else "player1"
+        
+        legal_moves = []
+        current_positions = set(self.player_positions[player])
+        
+        for x in range(1, 5):
+            for y in range(1, 5):
+                for orientation in ['N', 'S', 'E', 'W']:
+                    try:
+                        new_positions = generate_l_shape(x, y, orientation)
+                        new_positions_set = set(new_positions)
+                        
+                        if new_positions_set == current_positions:
+                            continue
+                            
+                        if not all(1 <= pos[0] <= 4 and 1 <= pos[1] <= 4 for pos in new_positions):
+                            continue
+                            
+                        valid = True
+                        occupied_positions = (set(self.player_positions[other_player]) | 
+                                        set(self.dot_positions))
+                        
+                        for pos in new_positions:
+                            if pos in occupied_positions:
+                                valid = False
+                                break
+                                
+                        if valid:
+                            legal_moves.append((x, y, orientation))
+                            
+                    except ValueError:
+                        continue
+        
+        return legal_moves
+    
+    
+    
 class MinimaxAgent:
     def __init__(self, depth='inf'):
         self.depth = float('inf') if depth == 'inf' else int(depth)
@@ -239,83 +260,216 @@ class MinimaxAgent:
 class LGame:
     def __init__(self):
         pygame.init()
-        self.screen_width = 400
-        self.screen_height = 500
+        self.screen_width = 800
+        self.screen_height = 900
         self.grid_size = 4
-        self.cell_size = 100
+        self.cell_size = 150
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("L-Game")
 
-        # Colors
         self.white = (255, 255, 255)
         self.black = (0, 0, 0)
         self.red = (255, 0, 0)
         self.blue = (0, 0, 255)
         self.gray = (128, 128, 128)
         self.green = (0, 255, 0)
+        self.yellow = (255, 255, 0)
 
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(None, 48)
+        self.reset_game()
+
+    def initialize_game_state(self):
+        default_state = "3 1 W 1 1 4 4 2 4 E"
+        input_text = ""
+        instructions_shown = True  # Start by showing instructions
+        
+        while True:
+            self.screen.fill(self.black)
+            
+            if instructions_shown:
+                # Display instructions
+                title = self.font.render("Enter Initial Game State", True, self.white)
+                title_rect = title.get_rect(center=(self.screen_width // 2, 100))
+                self.screen.blit(title, title_rect)
+                
+                # Display format instructions
+                format_text = "Format: P1(x y D) n1x n1y n2x n2y P2(x y D)"
+                format_surface = self.font.render(format_text, True, self.gray)
+                format_rect = format_surface.get_rect(center=(self.screen_width // 2, 150))
+                self.screen.blit(format_surface, format_rect)
+                
+                # Display example
+                example = "Example: 3 1 W 1 1 4 4 2 4 E"
+                example_surface = self.font.render(example, True, self.gray)
+                example_rect = example_surface.get_rect(center=(self.screen_width // 2, 180))
+                self.screen.blit(example_surface, example_rect)
+                
+                # Display enter instruction
+                enter_text = "Press ENTER for default state"
+                enter_surface = self.font.render(enter_text, True, self.green)
+                enter_rect = enter_surface.get_rect(center=(self.screen_width // 2, 220))
+                self.screen.blit(enter_surface, enter_rect)
+                
+                # Display or hide instructions button
+                hide_text = "Press TAB to show instructions"
+                hide_surface = self.font.render(hide_text, True, self.yellow)
+                hide_rect = hide_surface.get_rect(center=(self.screen_width // 2, 260))
+                self.screen.blit(hide_surface, hide_rect)
+            else:
+                # Show button to display instructions
+                show_text = "Press TAB to hide instructions"
+                show_surface = self.font.render(show_text, True, self.yellow)
+                show_rect = show_surface.get_rect(center=(self.screen_width // 2, 100))
+                self.screen.blit(show_surface, show_rect)
+
+            # Display current input
+            input_prompt = self.font.render("Your input:", True, self.white)
+            input_prompt_rect = input_prompt.get_rect(center=(self.screen_width // 2, 320))
+            self.screen.blit(input_prompt, input_prompt_rect)
+
+            input_surface = self.font.render(input_text, True, self.green)
+            input_rect = input_surface.get_rect(center=(self.screen_width // 2, 350))
+            self.screen.blit(input_surface, input_rect)
+
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                    
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_TAB:
+                        instructions_shown = not instructions_shown
+                    elif event.key == pygame.K_BACKSPACE:
+                        input_text = input_text[:-1]
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        try:
+                            # Use default state if input is empty
+                            state_to_use = input_text.strip() if input_text.strip() else default_state
+                            tokens = state_to_use.split()
+                            
+                            if len(tokens) != 10:
+                                raise ValueError("Invalid input format. Must provide exactly 10 values.")
+
+                            p1_row, p1_col = int(tokens[0]), int(tokens[1])
+                            p1_orientation = tokens[2].upper()
+                            player1_positions = generate_l_shape(p1_row, p1_col, p1_orientation)
+
+                            neutral_1 = (int(tokens[3]), int(tokens[4]))
+                            neutral_2 = (int(tokens[5]), int(tokens[6]))
+
+                            p2_row, p2_col = int(tokens[7]), int(tokens[8])
+                            p2_orientation = tokens[9].upper()
+                            player2_positions = generate_l_shape(p2_row, p2_col, p2_orientation)
+
+                            all_positions = set(player1_positions + player2_positions + [neutral_1, neutral_2])
+                            if len(all_positions) != 10:
+                                raise ValueError("Pieces overlap or are invalid.")
+
+                            self.player_positions = {
+                                "player1": player1_positions,
+                                "player2": player2_positions
+                            }
+                            self.dot_positions = [neutral_1, neutral_2]
+                            self.current_player = "player1"
+                            self.past_moves = pastMoves()
+                            return
+                            
+                        except (ValueError, IndexError) as e:
+                            # Display error message
+                            error_text = f"Error: {str(e)}"
+                            error_surface = self.font.render(error_text, True, self.red)
+                            error_rect = error_surface.get_rect(center=(self.screen_width // 2, 400))
+                            self.screen.blit(error_surface, error_rect)
+                            pygame.display.flip()
+                            pygame.time.wait(2000)  # Show error for 2 seconds
+                            input_text = ""  # Clear input after error
+                            continue
+                            
+                    elif event.unicode.isprintable():
+                        input_text += event.unicode
+            
+            
+    def reset_game(self):
+        """Reset all game variables to their initial state"""
         self.input_text = ""
         self.game_mode = None
         self.ai_agent = MinimaxAgent(depth=3)
         self.past_moves = pastMoves()
+        self.game_over = False
+        self.winner_message = ""
         self.initialize_game_state()
-
-    def initialize_game_state(self):
-        print("Initializing game state...")
-        default_state = "3 1 W 1 1 4 4 2 4 E"
         
-        try:
-            user_input = input("Enter initial game state (or press Enter for default): ").strip()
-            if not user_input:
-                user_input = default_state
+    def display_play_again(self):
+        """Display play again options and handle input through Pygame"""
+        input_text = ""
+        while True:
+            # Clear screen and display messages
+            self.screen.fill(self.black)
+            
+            # Display winner message
+            winner_surface = self.font.render(self.winner_message, True, self.yellow)
+            winner_rect = winner_surface.get_rect(center=(self.screen_width // 2, 180))
+            self.screen.blit(winner_surface, winner_rect)
+            
+            # Display play again prompt
+            play_again = self.font.render("Play Again? (Y/N)", True, self.white)
+            play_rect = play_again.get_rect(center=(self.screen_width // 2, 250))
+            self.screen.blit(play_again, play_rect)
+            
+            # Display current input
+            input_surface = self.font.render(input_text, True, self.green)
+            input_rect = input_surface.get_rect(center=(self.screen_width // 2, 300))
+            self.screen.blit(input_surface, input_rect)
+            
+            pygame.display.flip()
 
-            tokens = user_input.split()
-            if len(tokens) != 10:
-                raise ValueError("Invalid input format. Must provide exactly 10 values.")
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return False
+                    
+                if event.type == pygame.KEYDOWN:
+                    # Handle backspace
+                    if event.key == pygame.K_BACKSPACE:
+                        input_text = input_text[:-1]
+                        
+                    # Handle return/enter
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        if input_text.upper() == 'Y':
+                            self.reset_game()
+                            return True
+                        elif input_text.upper() == 'N':
+                            return False
+                            
+                    # Handle character input
+                    elif event.unicode.upper() in ['Y', 'N']:
+                        input_text = event.unicode.upper()
 
-            # Parse Player 1's L-piece
-            p1_row, p1_col = int(tokens[0]), int(tokens[1])
-            p1_orientation = tokens[2].upper()
-            player1_positions = generate_l_shape(p1_row, p1_col, p1_orientation)
-
-            # Parse neutral pieces
-            neutral_1 = (int(tokens[3]), int(tokens[4]))
-            neutral_2 = (int(tokens[5]), int(tokens[6]))
-
-            # Parse Player 2's L-piece
-            p2_row, p2_col = int(tokens[7]), int(tokens[8])
-            p2_orientation = tokens[9].upper()
-            player2_positions = generate_l_shape(p2_row, p2_col, p2_orientation)
-
-            # Validate positions
-            all_positions = set(player1_positions + player2_positions + [neutral_1, neutral_2])
-            if len(all_positions) != 10:
-                raise ValueError("Pieces overlap or are invalid.")
-
-            self.player_positions = {
-                "player1": player1_positions,
-                "player2": player2_positions
-            }
-            self.dot_positions = [neutral_1, neutral_2]
-            self.current_player = "player1"
-            self.past_moves = pastMoves()
-
-        except (ValueError, IndexError) as e:
-            print(f"Error initializing game state: {e}")
-            print("Using default initial state...")
-            self.initialize_game_state()
+        return False
+    
+        
 
     def select_game_mode(self):
         while self.game_mode is None:
             self.screen.fill(self.black)
+            
+            # Create text surfaces
             title = self.font.render("Select Game Mode:", True, self.white)
             option1 = self.font.render("1. Human vs Human", True, self.white)
             option2 = self.font.render("2. Human vs AI", True, self.white)
             
-            self.screen.blit(title, (100, 150))
-            self.screen.blit(option1, (100, 200))
-            self.screen.blit(option2, (100, 250))
+            # Get rectangles for centering
+            title_rect = title.get_rect(center=(self.screen_width // 2, self.screen_height // 3))
+            option1_rect = option1.get_rect(center=(self.screen_width // 2, self.screen_height // 2))
+            option2_rect = option2.get_rect(center=(self.screen_width // 2, (self.screen_height // 2) + 80))
+            
+            # Draw centered text
+            self.screen.blit(title, title_rect)
+            self.screen.blit(option1, option1_rect)
+            self.screen.blit(option2, option2_rect)
+            
             pygame.display.flip()
 
             for event in pygame.event.get():
@@ -331,52 +485,106 @@ class LGame:
         return True
 
     def run(self):
-        if not self.select_game_mode():
-            return
-
         running = True
         while running:
-            if self.game_mode == "ai" and self.current_player == "player2":
-                # AI's turn
-                game_state = GameState(self.player_positions, self.dot_positions, self.current_player)
-                ai_move = self.ai_agent.getAction(game_state)  # Changed from getMove to getAction
-                
-                if ai_move:
-                    print("AI attempting move:", ai_move)
-                    success = self.update_game_state("player2", ai_move)  # No need to unpack the move
-                    if success:
-                        print("AI move successful")
-                        self.current_player = "player1"
-                    else:
-                        print("AI move failed")
-            
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+            # Select game mode if not selected
+            if not self.select_game_mode():
+                running = False
+                continue
 
-                if self.handle_input(event):
-                    command_parts = self.input_text.strip().lower().split()
-                    if command_parts[0] == "undo":
-                        if len(command_parts) == 2 and command_parts[1].isdigit():
-                            self.undo_last_move(int(command_parts[1]))
+            # Main game loop
+            game_running = True
+            while game_running and running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        game_running = False
+                    
+                    if not self.game_over and self.handle_input(event):
+                        command_parts = self.input_text.strip().lower().split()
+                        
+                        # Handle undo command
+                        if command_parts[0] == "undo":
+                            print("\n=== DEBUG: Processing undo command ===")
+                            if len(command_parts) == 2 and command_parts[1].isdigit():
+                                self.undo_last_move(int(command_parts[1]))
+                            else:
+                                self.undo_last_move(1)
+                            self.input_text = ""
+                            continue
+
+                        # Handle regular moves
+                        try:
+                            print(f"\n=== DEBUG: Processing move input: {self.input_text} ===")
+                            move = self.parse_input(self.input_text)
+                            if self.update_game_state(self.current_player, move):
+                                print(f"Move completed by {self.current_player}")
+                                
+                                # Create new state and check for win BEFORE switching players
+                                new_state = GameState(self.player_positions, self.dot_positions, self.current_player)
+                                
+                                # Get legal moves for the opponent
+                                opponent_index = 1 if self.current_player == "player1" else 0
+                                legal_moves = new_state.getLegalMoves(opponent_index)
+                                print(f"\nChecking opponent's moves after {self.current_player}'s move:")
+                                print(f"Legal moves available: {len(legal_moves)}")
+                                
+                                # Check for win conditions
+                                if len(legal_moves) <= 1:
+                                    winner = "Player 1" if self.current_player == "player1" else "Player 2"
+                                    if self.game_mode == "ai" and winner == "Player 2":
+                                        self.winner_message = f"AI WINS!"
+                                    else:
+                                        self.winner_message = f"{winner} WINS!"
+                                    print(f"\n!!! GAME OVER - {self.winner_message}")
+                                    self.game_over = True
+                                
+                                if not self.game_over:
+                                    print(f"Switching players from {self.current_player}", end=" ")
+                                    self.current_player = "player2" if self.current_player == "player1" else "player1"
+                                    print(f"to {self.current_player}")
+                                    
+                            self.input_text = ""
+                        except ValueError as e:
+                            print(f"\nDEBUG: Error processing move - {e}")
+                            self.input_text = ""
+
+                # Handle AI moves
+                if not self.game_over and self.game_mode == "ai" and self.current_player == "player2":
+                    print("\n=== DEBUG: AI's turn ===")
+                    game_state = GameState(self.player_positions, self.dot_positions, self.current_player)
+                    ai_move = self.ai_agent.getAction(game_state)
+                    
+                    if ai_move:
+                        print("AI attempting move:", ai_move)
+                        success = self.update_game_state("player2", ai_move)
+                        if success:
+                            print("AI move successful")
+                            new_state = GameState(self.player_positions, self.dot_positions, "player2")
+                            legal_moves = new_state.getLegalMoves(0)  # Check player1's moves
+                            if len(legal_moves) <= 1:
+                                self.winner_message = "AI WINS!"
+                                print(f"\n!!! GAME OVER - {self.winner_message}")
+                                self.game_over = True
+                            else:
+                                self.current_player = "player1"
                         else:
-                            self.undo_last_move(1)
-                        self.input_text = ""
-                        continue
+                            print("AI move failed")
 
-                    try:
-                        move = self.parse_input(self.input_text)
-                        if self.update_game_state(self.current_player, move):
-                            self.current_player = "player2" if self.current_player == "player1" else "player1"
-                        self.input_text = ""
-                    except ValueError as e:
-                        print(f"Error: {e}")
-                        self.input_text = ""
+                # Update the display
+                self.update_display()
 
-            self.update_display()
+                # If game is over, show play again option
+                if self.game_over:
+                    if self.display_play_again():
+                        game_running = False  # Exit current game loop to start new game
+                    else:
+                        running = False  # Exit main loop to quit game
+                        game_running = False
 
+       
         pygame.quit()
-    
+        
     def undo_last_move(self, amount=1):
         if amount <= 0:
             print("Invalid undo amount!")
@@ -426,6 +634,10 @@ class LGame:
             raise ValueError("Invalid input. Make sure to enter integers for coordinates and a valid direction.")
 
     def update_game_state(self, player, move):
+        
+        if self.game_over:
+            return False
+        
         x, y, orientation, neutral_move = move
         other_player = "player2" if player == "player1" else "player1"
         
@@ -500,20 +712,61 @@ class LGame:
         
     def update_display(self):
         self.screen.fill(self.black)
-        self.draw_grid()
-        self.draw_player_pieces(self.player_positions["player1"], self.red)
-        self.draw_player_pieces(self.player_positions["player2"], self.blue)
-        for dot_pos in self.dot_positions:
-            self.draw_dot(dot_pos, self.white)
+        
+        # Calculate grid position to center it
+        grid_width = self.grid_size * self.cell_size
+        grid_height = self.grid_size * self.cell_size
+        grid_x = (self.screen_width - grid_width) // 2
+        grid_y = 50  # Offset from top
+        
+        # Draw grid with offset
+        for row in range(self.grid_size):
+            for col in range(self.grid_size):
+                x = grid_x + col * self.cell_size
+                y = grid_y + row * self.cell_size
+                pygame.draw.rect(self.screen, self.gray, 
+                            (x, y, self.cell_size, self.cell_size), 2)
 
-        pygame.draw.rect(self.screen, self.gray, (10, 420, 380, 60))
+        # Draw player pieces with offset
+        for pos in self.player_positions["player1"]:
+            row, col = pos
+            x = grid_x + (row - 1) * self.cell_size
+            y = grid_y + (col - 1) * self.cell_size
+            pygame.draw.rect(self.screen, self.red, 
+                            (x, y, self.cell_size, self.cell_size))
+
+        for pos in self.player_positions["player2"]:
+            row, col = pos
+            x = grid_x + (row - 1) * self.cell_size
+            y = grid_y + (col - 1) * self.cell_size
+            pygame.draw.rect(self.screen, self.blue, 
+                            (x, y, self.cell_size, self.cell_size))
+
+        # Draw dots with offset
+        for position in self.dot_positions:
+            row, col = position
+            x = grid_x + (row - 1) * self.cell_size + self.cell_size // 2
+            y = grid_y + (col - 1) * self.cell_size + self.cell_size // 2
+            pygame.draw.circle(self.screen, self.white, (x, y), self.cell_size // 4)
+
+        # Draw input box at bottom
+        input_box_height = 80
+        pygame.draw.rect(self.screen, self.gray, 
+                        (20, self.screen_height - input_box_height - 20, 
+                        self.screen_width - 40, input_box_height))
         input_surface = self.font.render(self.input_text, True, self.green)
-        self.screen.blit(input_surface, (15, 430))
+        self.screen.blit(input_surface, (30, self.screen_height - input_box_height - 10))
 
-        # Display current player and game mode
-        player_text = f"Current Player: {'Human' if self.current_player == 'player1' else ('AI' if self.game_mode == 'ai' else 'Human 2')}"
-        player_surface = self.font.render(player_text, True, self.white)
-        self.screen.blit(player_surface, (10, 380))
+        # Draw current player or game over message
+        if not self.game_over:
+            player_text = f"Current Player: {'Human' if self.current_player == 'player1' else ('AI' if self.game_mode == 'ai' else 'Human 2')}"
+            player_surface = self.font.render(player_text, True, self.white)
+            self.screen.blit(player_surface, (20, self.screen_height - input_box_height - 80))
+        else:
+            winner_surface = self.font.render(self.winner_message, True, self.yellow)
+            winner_rect = winner_surface.get_rect(center=(self.screen_width // 2, 
+                                                        self.screen_height - input_box_height - 80))
+            self.screen.blit(winner_surface, winner_rect)
 
         pygame.display.flip()
 
