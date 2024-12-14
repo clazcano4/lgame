@@ -605,7 +605,7 @@ class LGame:
     def handle_input(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
-                return True
+                return bool(self.input_text.strip())
             elif event.key == pygame.K_BACKSPACE:
                 self.input_text = self.input_text[:-1]
             else:
