@@ -1,5 +1,7 @@
 import pygame
 import random
+import sys
+
 
 class GameState:
     def __init__(self, player_positions, dot_positions, current_player):
