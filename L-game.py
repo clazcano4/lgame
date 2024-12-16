@@ -117,32 +117,93 @@ class MinimaxAgent:
                 for l_move, neutral_move in valid_moves:
                     combined_move = (l_move[0], l_move[1], l_move[2], neutral_move)
                     successor = self.getSuccessor(state, combined_move)
-                    new_score, _ = alphabeta(successor, depth - 1, alpha, beta, False, moves_made + 1)
-                    if new_score > value:
-                        value = new_score
-                        best_move = combined_move
-                    alpha = max(alpha, value)
-                    if beta <= alpha:
-                        break
+                    if successor:  # Only process if the move was valid
+                        new_score, _ = alphabeta(successor, depth - 1, alpha, beta, False, moves_made + 1)
+                        if new_score > value:
+                            value = new_score
+                            best_move = combined_move
+                        alpha = max(alpha, value)
+                        if beta <= alpha:
+                            break
             else:
                 value = float('inf')
                 for l_move, neutral_move in valid_moves:
                     combined_move = (l_move[0], l_move[1], l_move[2], neutral_move)
                     successor = self.getSuccessor(state, combined_move)
-                    new_score, _ = alphabeta(successor, depth - 1, alpha, beta, True, moves_made + 1)
-                    if new_score < value:
-                        value = new_score
-                        best_move = combined_move
-                    beta = min(beta, value)
-                    if beta <= alpha:
-                        break
-                    
+                    if successor:  # Only process if the move was valid
+                        new_score, _ = alphabeta(successor, depth - 1, alpha, beta, True, moves_made + 1)
+                        if new_score < value:
+                            value = new_score
+                            best_move = combined_move
+                        beta = min(beta, value)
+                        if beta <= alpha:
+                            break
+                        
             self.cache[state_key] = (value, best_move)
             return value, best_move
 
+        valid_moves = self.getLegalMovesWithNeutral(gameState)
+        if not valid_moves:
+            return None
+            
         _, action = alphabeta(gameState, self.depth, float('-inf'), float('inf'), True)
         print(f"Nodes expanded: {self.nodes_expanded}")
-        return action
+        
+        if action:
+            return action
+            
+        # Fallback to any valid move if alphabeta fails
+        l_move, neutral_move = valid_moves[0]
+        return (l_move[0], l_move[1], l_move[2], neutral_move)
+    
+
+    def getSuccessor(self, state, move):
+        """
+        Gets the successor state after applying a combined move
+        """
+        x, y, orientation, neutral_move = move
+        if neutral_move is None:
+            return None
+            
+        # Verify L piece move
+        new_l_positions = generate_l_shape(x, y, orientation)
+        other_player = "player2" if state.current_player == "player1" else "player1"
+        
+        # Check for collisions
+        other_pieces = set(state.player_positions[other_player])
+        dots = set(state.dot_positions)
+        
+        # Validate L piece positions
+        for pos in new_l_positions:
+            if not (1 <= pos[0] <= 4 and 1 <= pos[1] <= 4):
+                return None
+            if pos in other_pieces or pos in dots:
+                return None
+                
+        # Validate neutral piece movement
+        old_pos, new_pos = neutral_move
+        if old_pos not in state.dot_positions:
+            return None
+            
+        if not (1 <= new_pos[0] <= 4 and 1 <= new_pos[1] <= 4):
+            return None
+            
+        if (new_pos in new_l_positions or 
+            new_pos in state.player_positions[other_player] or 
+            new_pos in state.dot_positions):
+            return None
+        
+        # All validations passed, create new state
+        new_player_positions = dict(state.player_positions)
+        new_player_positions[state.current_player] = new_l_positions
+        new_dot_positions = list(state.dot_positions)
+        
+        # Apply neutral piece movement
+        new_dot_positions.remove(old_pos)
+        new_dot_positions.append(new_pos)
+            
+        return GameState(new_player_positions, new_dot_positions, 
+                        "player2" if state.current_player == "player1" else "player1")
 
     def coversNewSquare(self, old_positions, new_positions):
         """
@@ -157,27 +218,66 @@ class MinimaxAgent:
         """
         Gets all legal moves with mandatory neutral piece movement and new square coverage
         """
-        basic_moves = state.getLegalMoves(1)
         combined_moves = []
-        current_l_positions = state.player_positions["player2"]
+        current_player = state.current_player
+        other_player = "player2" if current_player == "player1" else "player1"
         
-        for move in basic_moves:
-            # Generate new L-piece positions
-            new_l_positions = generate_l_shape(move[0], move[1], move[2])
-            
-            # Check if the L-piece covers at least one new square
-            if not self.coversNewSquare(current_l_positions, new_l_positions):
-                continue
-                
-            # For valid L-piece moves, try all possible neutral piece movements
-            for dot_idx, dot_pos in enumerate(state.dot_positions):
-                for x in range(1, 5):
-                    for y in range(1, 5):
-                        new_pos = (x, y)
-                        # Check if neutral move is valid with this L-piece move
-                        if self.isValidNeutralMove(state, dot_pos, new_pos, new_l_positions):
-                            combined_moves.append((move, (dot_pos, new_pos)))
+        # Get all pieces' current positions as sets for efficient collision checking
+        current_l_positions = set(state.player_positions[current_player])
+        other_pieces = set(state.player_positions[other_player])
+        dot_positions = set(state.dot_positions)
         
+        # Try all possible L-piece positions
+        for x in range(1, 5):
+            for y in range(1, 5):
+                for orientation in ['N', 'S', 'E', 'W']:
+                    try:
+                        # Generate new L-piece positions
+                        new_l_positions = generate_l_shape(x, y, orientation)
+                        new_positions_set = set(new_l_positions)
+                        
+                        # Skip if no new squares are covered
+                        if not bool(new_positions_set - current_l_positions):
+                            continue
+                            
+                        # Check if all positions are within bounds
+                        if not all(1 <= pos[0] <= 4 and 1 <= pos[1] <= 4 for pos in new_l_positions):
+                            continue
+                            
+                        # Check for collisions with other pieces
+                        if (new_positions_set & other_pieces) or (new_positions_set & dot_positions):
+                            continue
+                        
+                        # For valid L-piece positions, try all possible neutral piece movements
+                        for dot_pos in state.dot_positions:
+                            for new_x in range(1, 5):
+                                for new_y in range(1, 5):
+                                    new_dot_pos = (new_x, new_y)
+                                    
+                                    # Skip if neutral piece doesn't actually move
+                                    if new_dot_pos == dot_pos:
+                                        continue
+                                    
+                                    # Skip if new position is out of bounds
+                                    if not (1 <= new_x <= 4 and 1 <= new_y <= 4):
+                                        continue
+                                    
+                                    # Skip if new position overlaps with any piece
+                                    if (new_dot_pos in new_positions_set or
+                                        new_dot_pos in other_pieces or
+                                        new_dot_pos in (set(state.dot_positions) - {dot_pos})):
+                                        continue
+                                    
+                                    # Move is valid - add it to the list
+                                    l_move = (x, y, orientation)
+                                    neutral_move = (dot_pos, new_dot_pos)
+                                    combined_moves.append((l_move, neutral_move))
+                                    
+                    except ValueError:
+                        continue
+        
+        # Shuffle moves for variety
+        random.shuffle(combined_moves)
         return combined_moves
 
     def isValidNeutralMove(self, state, old_pos, new_pos, new_l_positions):
@@ -197,25 +297,6 @@ class MinimaxAgent:
             
         return True
 
-    def getSuccessor(self, state, move):
-        """
-        Gets the successor state after applying a combined move
-        """
-        x, y, orientation, neutral_move = move
-        if neutral_move is None:
-            return state  # Invalid move - must include neutral piece movement
-            
-        # Create new state
-        new_player_positions = dict(state.player_positions)
-        new_player_positions["player2"] = generate_l_shape(x, y, orientation)
-        new_dot_positions = list(state.dot_positions)
-        
-        # Apply neutral piece movement
-        old_pos, new_pos = neutral_move
-        new_dot_positions.remove(old_pos)
-        new_dot_positions.append(new_pos)
-            
-        return GameState(new_player_positions, new_dot_positions, "player1")
 
     def evaluationFunction(self, state):
         """
@@ -283,46 +364,32 @@ class LGame:
     def initialize_game_state(self):
         default_state = "3 1 W 1 1 4 4 2 4 E"
         input_text = ""
-        instructions_shown = True  # Start by showing instructions
         
         while True:
             self.screen.fill(self.black)
             
-            if instructions_shown:
-                # Display instructions
-                title = self.font.render("Enter Initial Game State", True, self.white)
-                title_rect = title.get_rect(center=(self.screen_width // 2, 100))
-                self.screen.blit(title, title_rect)
-                
-                # Display format instructions
-                format_text = "Format: P1(x y D) n1x n1y n2x n2y P2(x y D)"
-                format_surface = self.font.render(format_text, True, self.gray)
-                format_rect = format_surface.get_rect(center=(self.screen_width // 2, 150))
-                self.screen.blit(format_surface, format_rect)
-                
-                # Display example
-                example = "Example: 3 1 W 1 1 4 4 2 4 E"
-                example_surface = self.font.render(example, True, self.gray)
-                example_rect = example_surface.get_rect(center=(self.screen_width // 2, 180))
-                self.screen.blit(example_surface, example_rect)
-                
-                # Display enter instruction
-                enter_text = "Press ENTER for default state"
-                enter_surface = self.font.render(enter_text, True, self.green)
-                enter_rect = enter_surface.get_rect(center=(self.screen_width // 2, 220))
-                self.screen.blit(enter_surface, enter_rect)
-                
-                # Display or hide instructions button
-                hide_text = "Press TAB to show instructions"
-                hide_surface = self.font.render(hide_text, True, self.yellow)
-                hide_rect = hide_surface.get_rect(center=(self.screen_width // 2, 260))
-                self.screen.blit(hide_surface, hide_rect)
-            else:
-                # Show button to display instructions
-                show_text = "Press TAB to hide instructions"
-                show_surface = self.font.render(show_text, True, self.yellow)
-                show_rect = show_surface.get_rect(center=(self.screen_width // 2, 100))
-                self.screen.blit(show_surface, show_rect)
+            # Display instructions
+            title = self.font.render("Enter Initial Game State", True, self.white)
+            title_rect = title.get_rect(center=(self.screen_width // 2, 100))
+            self.screen.blit(title, title_rect)
+            
+            # Display format instructions
+            format_text = "Format: P1(x y D) n1x n1y n2x n2y P2(x y D)"
+            format_surface = self.font.render(format_text, True, self.gray)
+            format_rect = format_surface.get_rect(center=(self.screen_width // 2, 150))
+            self.screen.blit(format_surface, format_rect)
+            
+            # Display example
+            example = "Example: 3 1 W 1 1 4 4 2 4 E"
+            example_surface = self.font.render(example, True, self.gray)
+            example_rect = example_surface.get_rect(center=(self.screen_width // 2, 180))
+            self.screen.blit(example_surface, example_rect)
+            
+            # Display enter instruction
+            enter_text = "Press ENTER for default state"
+            enter_surface = self.font.render(enter_text, True, self.green)
+            enter_rect = enter_surface.get_rect(center=(self.screen_width // 2, 220))
+            self.screen.blit(enter_surface, enter_rect)
 
             # Display current input
             input_prompt = self.font.render("Your input:", True, self.white)
@@ -341,9 +408,7 @@ class LGame:
                     sys.exit()
                     
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_TAB:
-                        instructions_shown = not instructions_shown
-                    elif event.key == pygame.K_BACKSPACE:
+                    if event.key == pygame.K_BACKSPACE:
                         input_text = input_text[:-1]
                     elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                         try:
@@ -449,7 +514,7 @@ class LGame:
                     elif event.unicode.upper() in ['Y', 'N']:
                         input_text = event.unicode.upper()
 
-        return False
+       
     
         
 
@@ -461,16 +526,19 @@ class LGame:
             title = self.font.render("Select Game Mode:", True, self.white)
             option1 = self.font.render("1. Human vs Human", True, self.white)
             option2 = self.font.render("2. Human vs AI", True, self.white)
+            option3 = self.font.render("3. AI vs AI", True, self.white)
             
             # Get rectangles for centering
             title_rect = title.get_rect(center=(self.screen_width // 2, self.screen_height // 3))
             option1_rect = option1.get_rect(center=(self.screen_width // 2, self.screen_height // 2))
             option2_rect = option2.get_rect(center=(self.screen_width // 2, (self.screen_height // 2) + 80))
+            option3_rect = option3.get_rect(center=(self.screen_width // 2, (self.screen_height // 2) + 160))
             
             # Draw centered text
             self.screen.blit(title, title_rect)
             self.screen.blit(option1, option1_rect)
             self.screen.blit(option2, option2_rect)
+            self.screen.blit(option3, option3_rect)
             
             pygame.display.flip()
 
@@ -480,11 +548,68 @@ class LGame:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_1:
                         self.game_mode = "human"
+                        if not self.select_first_player("HUMAN VS HUMAN"):
+                            return False
                         return True
                     elif event.key == pygame.K_2:
                         self.game_mode = "ai"
+                        if not self.select_first_player("HUMAN VS AI"):
+                            return False
+                        return True
+                    elif event.key == pygame.K_3:
+                        self.game_mode = "ai_vs_ai"
+                        # Create two different AI agents with different depths for variety
+                        self.ai_agent1 = MinimaxAgent(depth=3)  # AI player 1
+                        self.ai_agent2 = MinimaxAgent(depth=2)  # AI player 2
                         return True
         return True
+    
+    
+    def select_first_player(self, mode_title):
+        """Handle first player selection for human modes"""
+        while True:
+            self.screen.fill(self.black)
+            
+            # Display mode title
+            title = self.font.render(mode_title, True, self.white)
+            title_rect = title.get_rect(center=(self.screen_width // 2, self.screen_height // 3))
+            self.screen.blit(title, title_rect)
+            
+            # Display selection prompt
+            prompt = self.font.render("Who goes first?", True, self.white)
+            prompt_rect = prompt.get_rect(center=(self.screen_width // 2, self.screen_height // 2))
+            self.screen.blit(prompt, prompt_rect)
+            
+            # Display options
+            if self.game_mode == "human":
+                option1 = self.font.render("1. Player 1", True, self.white)
+                option2 = self.font.render("2. Player 2", True, self.white)
+            else:  # human vs AI
+                option1 = self.font.render("1. Human", True, self.white)
+                option2 = self.font.render("2. AI", True, self.white)
+                
+            option1_rect = option1.get_rect(center=(self.screen_width // 2, (self.screen_height // 2) + 80))
+            option2_rect = option2.get_rect(center=(self.screen_width // 2, (self.screen_height // 2) + 160))
+            
+            self.screen.blit(option1, option1_rect)
+            self.screen.blit(option2, option2_rect)
+            
+            pygame.display.flip()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        self.current_player = "player1"
+                        return True
+                    elif event.key == pygame.K_2:
+                        self.current_player = "player2"
+                        if self.game_mode == "ai":
+                            self.ai_agent = MinimaxAgent(depth=3)  # Create AI agent here if AI goes first
+                        return True
+
+
 
     def run(self):
         running = True
@@ -502,12 +627,11 @@ class LGame:
                         running = False
                         game_running = False
                     
-                    if not self.game_over and self.handle_input(event):
+                    if not self.game_over and self.game_mode != "ai_vs_ai" and self.handle_input(event):
                         command_parts = self.input_text.strip().lower().split()
                         
                         # Handle undo command
                         if command_parts[0] == "undo":
-                            print("\n=== DEBUG: Processing undo command ===")
                             if len(command_parts) == 2 and command_parts[1].isdigit():
                                 self.undo_last_move(int(command_parts[1]))
                             else:
@@ -517,61 +641,77 @@ class LGame:
 
                         # Handle regular moves
                         try:
-                            print(f"\n=== DEBUG: Processing move input: {self.input_text} ===")
                             move = self.parse_input(self.input_text)
                             if self.update_game_state(self.current_player, move):
-                                print(f"Move completed by {self.current_player}")
-                                
-                                # Create new state and check for win BEFORE switching players
                                 new_state = GameState(self.player_positions, self.dot_positions, self.current_player)
-                                
-                                # Get legal moves for the opponent
                                 opponent_index = 1 if self.current_player == "player1" else 0
                                 legal_moves = new_state.getLegalMoves(opponent_index)
-                                print(f"\nChecking opponent's moves after {self.current_player}'s move:")
-                                print(f"Legal moves available: {len(legal_moves)}")
                                 
-                                # Check for win conditions
                                 if len(legal_moves) <= 1:
                                     winner = "Player 1" if self.current_player == "player1" else "Player 2"
                                     if self.game_mode == "ai" and winner == "Player 2":
                                         self.winner_message = f"AI WINS!"
                                     else:
                                         self.winner_message = f"{winner} WINS!"
-                                    print(f"\n!!! GAME OVER - {self.winner_message}")
                                     self.game_over = True
                                 
                                 if not self.game_over:
-                                    print(f"Switching players from {self.current_player}", end=" ")
                                     self.current_player = "player2" if self.current_player == "player1" else "player1"
-                                    print(f"to {self.current_player}")
                                     
                             self.input_text = ""
                         except ValueError as e:
-                            print(f"\nDEBUG: Error processing move - {e}")
                             self.input_text = ""
 
                 # Handle AI moves
-                if not self.game_over and self.game_mode == "ai" and self.current_player == "player2":
-                    print("\n=== DEBUG: AI's turn ===")
-                    game_state = GameState(self.player_positions, self.dot_positions, self.current_player)
-                    ai_move = self.ai_agent.getAction(game_state)
-                    
-                    if ai_move:
-                        print("AI attempting move:", ai_move)
-                        success = self.update_game_state("player2", ai_move)
-                        if success:
-                            print("AI move successful")
-                            new_state = GameState(self.player_positions, self.dot_positions, "player2")
-                            legal_moves = new_state.getLegalMoves(0)  # Check player1's moves
-                            if len(legal_moves) <= 1:
-                                self.winner_message = "AI WINS!"
-                                print(f"\n!!! GAME OVER - {self.winner_message}")
-                                self.game_over = True
+                if not self.game_over:
+                    if self.game_mode == "ai_vs_ai":
+                        # Add delay between AI moves for visibility
+                        pygame.time.wait(1000)  
+                        
+                        game_state = GameState(self.player_positions, self.dot_positions, self.current_player)
+                        
+                        # Determine which AI agent to use
+                        current_agent = self.ai_agent1 if self.current_player == "player1" else self.ai_agent2
+                        ai_move = current_agent.getAction(game_state)
+                        
+                        if ai_move:
+                            print(f"AI {self.current_player} attempting move:", ai_move)
+                            success = self.update_game_state(self.current_player, ai_move)
+                            if success:
+                                print(f"AI {self.current_player} move successful")
+                                new_state = GameState(self.player_positions, self.dot_positions, self.current_player)
+                                opponent_index = 1 if self.current_player == "player1" else 0
+                                legal_moves = new_state.getLegalMoves(opponent_index)
+                                
+                                if len(legal_moves) <= 1:
+                                    winner = "AI 1" if self.current_player == "player1" else "AI 2"
+                                    self.winner_message = f"{winner} WINS!"
+                                    print(f"\n!!! GAME OVER - {self.winner_message}")
+                                    self.game_over = True
+                                else:
+                                    self.current_player = "player2" if self.current_player == "player1" else "player1"
                             else:
-                                self.current_player = "player1"
-                        else:
-                            print("AI move failed")
+                                print(f"AI {self.current_player} move failed")
+                                
+                    elif self.game_mode == "ai" and self.current_player == "player2":
+                        game_state = GameState(self.player_positions, self.dot_positions, self.current_player)
+                        ai_move = self.ai_agent.getAction(game_state)
+                        
+                        if ai_move:
+                            print("AI attempting move:", ai_move)
+                            success = self.update_game_state("player2", ai_move)
+                            if success:
+                                print("AI move successful")
+                                new_state = GameState(self.player_positions, self.dot_positions, "player2")
+                                legal_moves = new_state.getLegalMoves(0)  # Check player1's moves
+                                if len(legal_moves) <= 1:
+                                    self.winner_message = "AI WINS!"
+                                    print(f"\n!!! GAME OVER - {self.winner_message}")
+                                    self.game_over = True
+                                else:
+                                    self.current_player = "player1"
+                            else:
+                                print("AI move failed")
 
                 # Update the display
                 self.update_display()
@@ -584,8 +724,10 @@ class LGame:
                         running = False  # Exit main loop to quit game
                         game_running = False
 
-       
         pygame.quit()
+        
+        
+        
         
     def undo_last_move(self, amount=1):
         if amount <= 0:
@@ -761,7 +903,10 @@ class LGame:
 
         # Draw current player or game over message
         if not self.game_over:
-            player_text = f"Current Player: {'Human' if self.current_player == 'player1' else ('AI' if self.game_mode == 'ai' else 'Human 2')}"
+            if self.game_mode == "ai_vs_ai":
+                player_text = f"Current Player: AI {1 if self.current_player == 'player1' else 2}"
+            else:
+                player_text = f"Current Player: {'Human' if self.current_player == 'player1' else ('AI' if self.game_mode == 'ai' else 'Human 2')}"
             player_surface = self.font.render(player_text, True, self.white)
             self.screen.blit(player_surface, (20, self.screen_height - input_box_height - 80))
         else:
@@ -795,9 +940,8 @@ def generate_l_shape(x, y, orientation):
     positions = []
     if orientation == 'N':  # Vertical arm up
         if x >= 3:  # Flip the piece if it's near the bottom edge
-            #("Flipping L-piece facing North near the bottom edge at ({}, {})".format(x, y))
             positions = [(x, y), (x, y - 1), (x - 1, y), (x - 2, y)]  # Flip upward
-        else:  # Standard L facing up
+        else: 
             #print("Standard L-piece facing North at ({}, {})".format(x, y))
             positions = [(x, y), (x, y - 1), (x + 1, y), (x + 2, y)]
 
@@ -805,7 +949,7 @@ def generate_l_shape(x, y, orientation):
         if x <= 2:  # Flip the piece if it's near the top edge
             #print("Flipping L-piece facing South near the top edge at ({}, {})".format(x, y))
             positions = [(x, y), (x, y + 1), (x + 1, y), (x + 2, y)]  # Flip downward
-        else:  # Standard L facing down
+        else: 
             #("Standard L-piece facing South at ({}, {})".format(x, y))
             positions = [(x, y), (x, y + 1), (x - 1, y), (x - 2, y)]
 
@@ -813,7 +957,7 @@ def generate_l_shape(x, y, orientation):
         if y <= 2:  # Flip the piece if it's near the left edge
             #print("Flipping L-piece facing East near the left edge at ({}, {})".format(x, y))
             positions = [(x, y), (x + 1, y), (x, y + 1), (x, y + 2)]  # Flip rightward
-        else:  # Standard L facing right
+        else: 
             #print("Standard L-piece facing East at ({}, {})".format(x, y))
             positions = [(x, y), (x + 1, y), (x, y - 1), (x, y - 2)]
 
@@ -821,7 +965,7 @@ def generate_l_shape(x, y, orientation):
         if y >= 3:  # Flip the piece if it's near the right edge
             #print("Flipping L-piece facing West near the right edge at ({}, {})".format(x, y))
             positions = [(x, y), (x - 1, y), (x, y - 1), (x, y - 2)]  # Flip leftward
-        else:  # Standard L facing left
+        else:  
             #print("Standard L-piece facing West at ({}, {})".format(x, y))
             positions = [(x, y), (x, y + 1), (x, y + 2), (x - 1, y)]
 
